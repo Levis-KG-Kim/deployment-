@@ -86,7 +86,7 @@ with col[0]:
     plt.tight_layout()
     plt.show()
 
-with col[0]:
+with col[1]:
 # Load the shapefile
     @st.cache_data
     def load_shapefile():
