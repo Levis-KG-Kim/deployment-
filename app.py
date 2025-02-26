@@ -55,7 +55,7 @@ def create_map(selected_area, selected_color_theme):
     m = folium.Map(location=[-1.286389, 36.817223], zoom_start=6)  # Centered on Kenya
 
     # Filter shapefile for selected area
-    gdf_selected = gdf[gdf['Area_Name'] == selected_area]  # Adjust 'NAME' based on actual column name
+    gdf_selected = gdf[gdf['AreaName'] == selected_area]  # Adjust 'NAME' based on actual column name
     
     # If the area exists, highlight it
     if not gdf_selected.empty:
@@ -81,5 +81,5 @@ folium_static(create_map(selected_area, selected_color_theme))
 
 # Show area data
 st.subheader("Shapefile Data")
-st.write(gdf[gdf['Area_Name'] == selected_area])  # Show selected area details
+st.write(gdf[gdf['AreaName'] == selected_area])  # Show selected area details
 
