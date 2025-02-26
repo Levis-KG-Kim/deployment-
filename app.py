@@ -74,7 +74,7 @@ def create_map(selected_area):
         area_name = row[area_column]
         
         # Retrieve risk level (If available in CSV)
-        risk_level = df_selected_year[df_selected_year["Area_Name"] == area_name]["Area_Risk_Trend"].values
+        risk_level = df_selected_year[df_selected_year["Area_Name"] == area_name]["Risk_Factor"].values
         risk_level = risk_level[0] if len(risk_level) > 0 else "Low"
         
         folium.GeoJson(
