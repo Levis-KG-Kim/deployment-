@@ -90,7 +90,7 @@ df_area = df_reshaped[df_reshaped["Area_Name"] == selected_area]
 # Time-Series Line Chart
 st.subheader(f"Time-Series Trends for {selected_area}")
 line_chart = alt.Chart(df_area).transform_fold(
-    ["NDVI", "NDWI", "BSI"], as_=["Index", "Value"]
+    ["mean_dvi", "mean_ndwi", "mean_bsi","Mean_Rainfall_mm"], as_=["Index", "Value"]
 ).mark_line().encode(
     x="Year:O",
     y="Value:Q",
@@ -103,20 +103,20 @@ st.altair_chart(line_chart, use_container_width=True)
 st.subheader("Distribution of NDVI, NDWI, and BSI")
 fig, ax = plt.subplots(1, 3, figsize=(15, 5))
 
-sns.histplot(df_area["NDVI"], bins=20, kde=True, ax=ax[0], color="green")
+sns.histplot(df_area["mean_ndvi"], bins=20, kde=True, ax=ax[0], color="green")
 ax[0].set_title("NDVI Distribution")
 
-sns.histplot(df_area["NDWI"], bins=20, kde=True, ax=ax[1], color="blue")
+sns.histplot(df_area["mean_ndwi"], bins=20, kde=True, ax=ax[1], color="blue")
 ax[1].set_title("NDWI Distribution")
 
-sns.histplot(df_area["BSI"], bins=20, kde=True, ax=ax[2], color="red")
+sns.histplot(df_area["mean_bsi"], bins=20, kde=True, ax=ax[2], color="red")
 ax[2].set_title("BSI Distribution")
 
 st.pyplot(fig)
 
 # Heatmap of Correlations
 st.subheader("Correlation Heatmap of Biodiversity Indicators")
-corr_matrix = df_area[["NDVI", "NDWI", "BSI"]].corr()
+corr_matrix = df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]].corr()
 fig, ax = plt.subplots(figsize=(6, 4))
 sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
 st.pyplot(fig)
