@@ -21,7 +21,7 @@ df_reshaped = pd.read_csv('final_merged.csv')
 
 @st.cache_data
 def load_shapefile():
-    return gpd.read_file("shapefiles/kbd_with_names.shp")
+    return gpd.read_file("kbd_with_names.shp")
 
 gdf = load_shapefile()
 
@@ -53,11 +53,11 @@ with st.sidebar:
     selected_area = st.selectbox('Select an Area', area_list)
 
     # Color Theme Selection
-    color_theme_list = ['blues', 'cividis', 'greens', 'inferno', 'magma', 'plasma', 'reds', 'rainbow', 'turbo', 'viridis']
+    color_theme_list = ['Blues', 'Cividis', 'Greens', 'Inferno', 'Magma', 'Plasma', 'Reds', 'Rainbow', 'Turbo', 'Viridis']
     selected_color_theme = st.selectbox('Select a Color Theme', color_theme_list)
 
 # Function to Create Map with Area Highlighting
-def create_map(selected_area):
+def create_map(selected_area, selected_color_theme):
     m = folium.Map(location=[-1.286389, 36.817223], zoom_start=6)  # Centered on Kenya
 
     # Filter shapefile for selected area
@@ -91,36 +91,37 @@ def create_map(selected_area):
 
     return m
 
-# Main UI
-st.title("Kenyan Areas Visualization")
+# ======================== New Dashboard Layout ========================
+st.title("🌍 Terrestrial Ecosystems in Kenya")
 
-# Map display
-st.subheader(f"Map of {selected_area} in {selected_year}")
-folium_static(create_map(selected_area))
+# **Use Columns for a Creative Layout**
+col1, col2 = st.columns([3, 2])
 
-# Show area data
-st.subheader("Shapefile Data")
-st.write(gdf[gdf[area_column] == selected_area])  # Show selected area details
+with col1:
+    # **Map Display**
+    st.subheader(f"📍 Map of {selected_area} in {selected_year}")
+    folium_static(create_map(selected_area, selected_color_theme))
 
-# ======================== Area Risk Trend Visualization ========================
+with col2:
+    # **Show Area Risk Trends**
+    st.subheader(f"⚠️ Risk Trend for {selected_area}")
+    risk_chart = alt.Chart(df_area).mark_line().encode(
+        x="Year:O",
+        y="Risk_Factor:Q",
+        color=alt.condition(
+            alt.datum.Risk_Factor > df_area["Risk_Factor"].median(),  # Highlight high-risk trends
+            alt.value("red"),  
+            alt.value("green")
+        )
+    ).interactive()
+    st.altair_chart(risk_chart, use_container_width=True)
 
-# Filter Data for Selected Area
-df_area = df_reshaped[df_reshaped["Area_Name"] == selected_area]
-
-st.subheader(f"Risk Trend for {selected_area}")
-
-# Line Chart for Risk Trends
-risk_chart = alt.Chart(df_area).mark_line().encode(
-    x="Year:O",
-    y="Risk_Factor:Q",
-    color=alt.value("red")
-).interactive()
-
-st.altair_chart(risk_chart, use_container_width=True)
+    # **Show Summary Statistics**
+    st.subheader("📊 Key Area Stats")
+    st.write(df_area.describe()[["mean_ndvi", "mean_ndwi", "mean_bsi"]])
 
 # ======================== Time-Series Biodiversity Indicators ========================
-
-st.subheader(f"Biodiversity Indicators Trends for {selected_area}")
+st.subheader(f"📈 Biodiversity Trends for {selected_area}")
 line_chart = alt.Chart(df_area).transform_fold(
     ["mean_ndvi", "mean_ndwi", "mean_bsi", "Mean_Rainfall_mm"], as_=["Index", "Value"]
 ).mark_line().encode(
@@ -128,34 +129,16 @@ line_chart = alt.Chart(df_area).transform_fold(
     y="Value:Q",
     color="Index:N"
 ).interactive()
-
 st.altair_chart(line_chart, use_container_width=True)
 
 # ======================== Data Distribution & Correlations ========================
+col3, col4 = st.columns(2)
 
-st.subheader("Distribution of NDVI, NDWI, and BSI")
-fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+with col3:
+    st.subheader("📌 Distribution of NDVI, NDWI, and BSI")
+    fig, ax = plt.subplots(1, 3, figsize=(15, 5))
 
-sns.histplot(df_area["mean_ndvi"], bins=20, kde=True, ax=ax[0], color="green")
-ax[0].set_title("NDVI Distribution")
+    sns.histplot(df_area["mean_ndvi"], bins=20, kde=True, ax=ax[0], color="green")
+    ax[0].set_title("NDVI Distribution")
 
-sns.histplot(df_area["mean_ndwi"], bins=20, kde=True, ax=ax[1], color="blue")
-ax[1].set_title("NDWI Distribution")
-
-sns.histplot(df_area["mean_bsi"], bins=20, kde=True, ax=ax[2], color="red")
-ax[2].set_title("BSI Distribution")
-
-st.pyplot(fig)
-
-# Correlation Heatmap
-st.subheader("Correlation Heatmap of Biodiversity Indicators")
-corr_matrix = df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]].corr()
-fig, ax = plt.subplots(figsize=(6, 4))
-sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
-st.pyplot(fig)
-
-# Boxplot for Variability Analysis
-st.subheader("Variability of Biodiversity Indicators")
-fig, ax = plt.subplots(figsize=(10, 5))
-sns.boxplot(data=df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]], palette="Set2")
-st.pyplot(fig)
+    sns.histplot(df_area["mean_ndwi"], bins=20, kde=True, ax=a
