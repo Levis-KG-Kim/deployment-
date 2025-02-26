@@ -11,87 +11,74 @@ from joblib import load
 import altair as alt
 import geopandas as gpd
 import folium
-from streamlit_folium import folium_static
-
-
+from streamlit_folium import folium_static 
 
 # Page configuration
 st.set_page_config(
-    page_title="Terrestrial ecosystem Kenya",
-    page_icon="🏂",
+    page_title="Terrestrial Ecosystem Kenya",
+    page_icon="🌍",
     layout="wide",
-    initial_sidebar_state="expanded")
+    initial_sidebar_state="expanded"
+)
 
-alt.themes.enable("dark")
-
-# Load data
+# Load Data
 df_reshaped = pd.read_csv('final_merged.csv')
 
-# Sidebar
+@st.cache_data
+def load_shapefile():
+    return gpd.read_file("shapefiles/kbd_with_names.shp")
+
+gdf = load_shapefile()
+
+# Sidebar Filters
 with st.sidebar:
-    st.title('Terrestrial ecosystems in Protected Areas')
+    st.title('Kenyan Protected Areas')
 
-    year_list = list(df_reshaped.Year.unique())[::-1]
+    # Year Selection
+    year_list = sorted(df_reshaped.Year.unique(), reverse=True)
+    selected_year = st.selectbox('Select a Year', year_list)
 
-    selected_year = st.selectbox('Select a year', year_list)
+    # Filter data for selected year
     df_selected_year = df_reshaped[df_reshaped.Year == selected_year]
-    df_selected_year_sorted = df_selected_year.sort_values(by="Area_Name", ascending=False)
+    
+    # Area Selection
+    area_list = sorted(df_selected_year.Area_Name.unique())
+    selected_area = st.selectbox('Select an Area', area_list)
 
-    area_list = list(df_selected_year_sorted.Area_Name.unique())
-
-    selected_area = st.selectbox('Select an area', area_list)
-    df_selected_area = df_selected_year_sorted[df_selected_year_sorted.Area_Name == selected_area]
-
-
+    # Color Theme Selection
     color_theme_list = ['blues', 'cividis', 'greens', 'inferno', 'magma', 'plasma', 'reds', 'rainbow', 'turbo', 'viridis']
-    selected_color_theme = st.selectbox('Select a color theme', color_theme_list)
+    selected_color_theme = st.selectbox('Select a Color Theme', color_theme_list)
 
+# Function to Create Map
+def create_map(selected_area, selected_color_theme):
+    m = folium.Map(location=[-1.286389, 36.817223], zoom_start=6)  # Centered on Kenya
 
-# Load Model
-@st.cache_resource
-def load_model():
-    model = xgb.Booster()
-    model.load_model("xgboost_model.json")  # Adjust file path
-    return model
+    # Filter shapefile for selected area
+    gdf_selected = gdf[gdf['NAME'] == selected_area]  # Adjust 'NAME' based on actual column name
+    
+    # If the area exists, highlight it
+    if not gdf_selected.empty:
+        folium.GeoJson(
+            gdf_selected,
+            name="Selected Area",
+            style_function=lambda feature: {
+                "fillColor": "blue" if selected_color_theme == "blues" else "green",
+                "color": "black",
+                "weight": 2,
+                "fillOpacity": 0.6,
+            }
+        ).add_to(m)
 
-# Main Dashboard UI
-# Dashboard Main Panel
-col = st.columns((1.5, 4.5, 2), gap='medium')
+    return m
 
-with col[0]:
-# Load the shapefile
-    @st.cache_data
-    def load_shapefile():
-        gdf = gpd.read_file("shapefiles/kbd_with_names.shp")
-        return gdf
-
-    gdf = load_shapefile()
-
-# Create a Folium map
-    def create_map(gdf):
-        m = folium.Map(location=[-1.286389, 36.817223], zoom_start=6)  # Centered on Kenya
-        folium.GeoJson(gdf, name="Kenyan Areas").add_to(m)
-        return m
-
-# Streamlit UI
-    st.title("Kenyan Areas Visualization")
-    st.sidebar.header("Shapefile Data")
-
-# Show basic details
-    st.sidebar.write("Number of Areas:", len(gdf))
+# Main UI
+st.title("Kenyan Areas Visualization")
 
 # Map display
-    st.subheader("Map of Kenyan Areas")
-    folium_static(create_map(gdf))
+st.subheader(f"Map of {selected_area} in {selected_year}")
+folium_static(create_map(selected_area, selected_color_theme))
 
-# Show table of areas
-    st.subheader("Area Data")
-    st.write(gdf)
+# Show area data
+st.subheader("Shapefile Data")
+st.write(gdf[gdf['NAME'] == selected_area])  # Show selected area details
 
-with col[2]:
-    st.markdown('#### Area Map')
-
-with st.expander('About', expanded=True):
-    st.write('''
-            Time series analysis and forecasting
-            ''')
