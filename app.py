@@ -1,4 +1,4 @@
-
+ map
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -53,8 +53,12 @@ with st.sidebar:
 def create_map(selected_area, selected_color_theme):
     m = folium.Map(location=[-1.286389, 36.817223], zoom_start=6)  # Centered on Kenya
 
+    # Ensure CRS is correct
+    if gdf.crs and gdf.crs != "EPSG:4326":
+        gdf.to_crs("EPSG:4326", inplace=True)
+
     # Filter shapefile for selected area
-    gdf_selected = gdf[gdf['AreaName'] == selected_area]  # Adjust column name
+    gdf_selected = gdf[gdf['AreaName'] == selected_area] 
     
     # If the area exists, highlight it
     if not gdf_selected.empty:
@@ -124,5 +128,5 @@ st.pyplot(fig)
 # Boxplot for Variability Analysis
 st.subheader("Variability of Biodiversity Indicators")
 fig, ax = plt.subplots(figsize=(10, 5))
-sns.boxplot(data=df_area[["NDVI", "NDWI", "BSI"]], palette="Set2")
+sns.boxplot(data=df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]], palette="Set2")
 st.pyplot(fig)
