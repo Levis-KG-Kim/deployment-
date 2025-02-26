@@ -13,7 +13,7 @@ import altair as alt
 
 # Page configuration
 st.set_page_config(
-    page_title="US Population Dashboard",
+    page_title="Terrestrial ecosystem Kenya",
     page_icon="🏂",
     layout="wide",
     initial_sidebar_state="expanded")
@@ -21,7 +21,7 @@ st.set_page_config(
 alt.themes.enable("dark")
 
 # Load data
-df_reshaped = pd.read_csv('data/final_merged.csv')
+df_reshaped = pd.read_csv('final_merged.csv')
 
 # Sidebar
 with st.sidebar:
