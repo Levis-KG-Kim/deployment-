@@ -42,7 +42,7 @@ with st.sidebar:
     df_selected_year = df_reshaped[df_reshaped.Year == selected_year]
     
     # Area Selection
-    area_list = sorted(df_selected_year.Area_Name.unique())
+    area_list = sorted(df_selected_year["Area_Name"].dropna().astype(str).unique())
     selected_area = st.selectbox('Select an Area', area_list)
 
     # Color Theme Selection
