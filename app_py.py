@@ -58,7 +58,7 @@ st.markdown('##')
 average_ndvi = df_select['mean_ndvi'].mean()
 average_ndwi = df_select['mean_ndwi'].mean()
 average_bsi = df_select['mean_bsi'].mean()
-average_rainfall = df_select['mean_rainfall'].mean()
+average_rainfall = df_select['Mean_Rainfall_mm'].mean()
 risk_factor = df_select['Risk_Factor'].mean()
 area_trend = df_select['Area_Trend']
 area_risk_trend = df_select['Area_Risk_Trend']
