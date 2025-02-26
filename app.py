@@ -112,7 +112,7 @@ st.subheader(f"Risk Trend for {selected_area}")
 # Line Chart for Risk Trends
 risk_chart = alt.Chart(df_area).mark_line().encode(
     x="Year:O",
-    y="Area_Risk_Trend:Q",
+    y="Risk_Factor:Q",
     color=alt.value("red")
 ).interactive()
 
