@@ -9,6 +9,10 @@ import xgboost as xgb
 from sklearn.preprocessing import StandardScaler
 from joblib import load
 import altair as alt
+import geopandas as gpd
+import folium
+from streamlit_folium import folium_static
+
 
 
 # Page configuration
@@ -80,24 +84,38 @@ with col[0]:
 
     plt.xlabel('Year')
     plt.tight_layout()
-    st.pyplot(fig)
+    plt.show()
 
-with col[1]:
-    st.markdown('#### Vegetation Indices')
-    # Predict Biodiversity Change
-    if st.button("Predict Change"):
+with col[0]:
+# Load the shapefile
+    @st.cache_data
+    def load_shapefile():
+        gdf = gpd.read_file("shapefiles/kbd_with_names.shp")
+        return gdf
 
-        # Prepare Features
-        features = np.array([selected_row['mean_ndvi'], selected_row['mean_ndwi'], selected_row['mean_bsi']]).reshape(1, -1)
-        prediction = model.predict(xgb.DMatrix(features))
-        result = ["Loss", "Stable", "Gain"][int(prediction[0])]
-        st.success(f"Biodiversity Change: {result}")
+    gdf = load_shapefile()
 
-    # SHAP Interpretation
-    if st.checkbox("Show Feature Importance"):
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(features)
-        shap.summary_plot(shap_values, features)
+# Create a Folium map
+    def create_map(gdf):
+        m = folium.Map(location=[-1.286389, 36.817223], zoom_start=6)  # Centered on Kenya
+        folium.GeoJson(gdf, name="Kenyan Areas").add_to(m)
+        return m
+
+# Streamlit UI
+    st.title("Kenyan Areas Visualization")
+    st.sidebar.header("Shapefile Data")
+
+# Show basic details
+    st.sidebar.write("Number of Areas:", len(gdf))
+
+# Map display
+    st.subheader("Map of Kenyan Areas")
+    folium_static(create_map(gdf))
+
+# Show table of areas
+    st.subheader("Area Data")
+    st.write(gdf)
+
 with col[2]:
     st.markdown('#### Area Map')
 
