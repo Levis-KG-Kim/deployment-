@@ -48,6 +48,7 @@ with st.sidebar:
     # Color Theme Selection
     color_theme_list = ['blues', 'cividis', 'greens', 'inferno', 'magma', 'plasma', 'reds', 'rainbow', 'turbo', 'viridis']
     selected_color_theme = st.selectbox('Select a Color Theme', color_theme_list)
+st.write("Columns in gdf:", gdf.columns)
 
 # Function to Create Map
 def create_map(selected_area, selected_color_theme):
