@@ -1,17 +1,12 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import shap
-import xgboost as xgb
-from sklearn.preprocessing import StandardScaler
-from joblib import load
 import altair as alt
 import geopandas as gpd
 import folium
-from streamlit_folium import folium_static 
+from streamlit_folium import folium_static
 
 # Page configuration
 st.set_page_config(
@@ -26,9 +21,21 @@ df_reshaped = pd.read_csv('final_merged.csv')
 
 @st.cache_data
 def load_shapefile():
-    return gpd.read_file("shapefiles/kbd_with_names.shp")
+    return gpd.read_file("kbd_with_names.shp")
 
 gdf = load_shapefile()
+
+# Ensure CRS is correct
+if gdf.crs and gdf.crs != "EPSG:4326":
+    gdf.to_crs("EPSG:4326", inplace=True)
+
+# Identify Correct Column Name for Area Filtering
+possible_area_columns = [col for col in gdf.columns if "area" in col.lower()]
+area_column = possible_area_columns[0] if possible_area_columns else None
+
+if not area_column:
+    st.error("No valid area name column found in the shapefile!")
+    st.stop()
 
 # Sidebar Filters
 with st.sidebar:
@@ -49,28 +56,37 @@ with st.sidebar:
     color_theme_list = ['blues', 'cividis', 'greens', 'inferno', 'magma', 'plasma', 'reds', 'rainbow', 'turbo', 'viridis']
     selected_color_theme = st.selectbox('Select a Color Theme', color_theme_list)
 
-# Function to Create Map
-def create_map(selected_area, selected_color_theme):
+# Function to Create Map with Area Highlighting
+def create_map(selected_area):
     m = folium.Map(location=[-1.286389, 36.817223], zoom_start=6)  # Centered on Kenya
 
-    # Ensure CRS is correct
-    if gdf.crs and gdf.crs != "EPSG:4326":
-        gdf.to_crs("EPSG:4326", inplace=True)
-
     # Filter shapefile for selected area
-    gdf_selected = gdf[gdf['AreaName'] == selected_area] 
+    gdf_selected = gdf[gdf[area_column].str.contains(selected_area, na=False, case=False)]
+
+    if gdf_selected.empty:
+        st.warning(f"No matching area found in the shapefile for '{selected_area}'.")
+        return m
+
+    # Assign Risk Colors
+    risk_color_map = {"High": "red", "Medium": "orange", "Low": "green"}
     
-    # If the area exists, highlight it
-    if not gdf_selected.empty:
+    for _, row in gdf_selected.iterrows():
+        area_name = row[area_column]
+        
+        # Retrieve risk level (If available in CSV)
+        risk_level = df_selected_year[df_selected_year["Area_Name"] == area_name]["Risk_Level"].values
+        risk_level = risk_level[0] if len(risk_level) > 0 else "Low"
+        
         folium.GeoJson(
-            gdf_selected,
-            name="Selected Area",
-            style_function=lambda feature: {
-                "fillColor": "blue" if selected_color_theme == "blues" else "green",
+            row["geometry"],
+            name=area_name,
+            style_function=lambda feature, risk=risk_level: {
+                "fillColor": risk_color_map.get(risk, "blue"),
                 "color": "black",
                 "weight": 2,
                 "fillOpacity": 0.6,
-            }
+            },
+            tooltip=folium.Tooltip(f"{area_name} - Risk: {risk_level}")
         ).add_to(m)
 
     return m
@@ -80,21 +96,33 @@ st.title("Kenyan Areas Visualization")
 
 # Map display
 st.subheader(f"Map of {selected_area} in {selected_year}")
-folium_static(create_map(selected_area, selected_color_theme))
+folium_static(create_map(selected_area))
 
 # Show area data
 st.subheader("Shapefile Data")
-st.write(gdf[gdf['AreaName'] == selected_area])  # Show selected area details
+st.write(gdf[gdf[area_column] == selected_area])  # Show selected area details
 
-# ======================== New Visualizations ========================
+# ======================== Area Risk Trend Visualization ========================
 
 # Filter Data for Selected Area
 df_area = df_reshaped[df_reshaped["Area_Name"] == selected_area]
 
-# Time-Series Line Chart
-st.subheader(f"Time-Series Trends for {selected_area}")
+st.subheader(f"Risk Trend for {selected_area}")
+
+# Line Chart for Risk Trends
+risk_chart = alt.Chart(df_area).mark_line().encode(
+    x="Year:O",
+    y="Area_Risk_Trend:Q",
+    color=alt.value("red")
+).interactive()
+
+st.altair_chart(risk_chart, use_container_width=True)
+
+# ======================== Time-Series Biodiversity Indicators ========================
+
+st.subheader(f"Biodiversity Indicators Trends for {selected_area}")
 line_chart = alt.Chart(df_area).transform_fold(
-    ["mean_dvi", "mean_ndwi", "mean_bsi","Mean_Rainfall_mm"], as_=["Index", "Value"]
+    ["mean_ndvi", "mean_ndwi", "mean_bsi", "Mean_Rainfall_mm"], as_=["Index", "Value"]
 ).mark_line().encode(
     x="Year:O",
     y="Value:Q",
@@ -103,7 +131,8 @@ line_chart = alt.Chart(df_area).transform_fold(
 
 st.altair_chart(line_chart, use_container_width=True)
 
-# Histogram of Biodiversity Indicators
+# ======================== Data Distribution & Correlations ========================
+
 st.subheader("Distribution of NDVI, NDWI, and BSI")
 fig, ax = plt.subplots(1, 3, figsize=(15, 5))
 
@@ -118,7 +147,7 @@ ax[2].set_title("BSI Distribution")
 
 st.pyplot(fig)
 
-# Heatmap of Correlations
+# Correlation Heatmap
 st.subheader("Correlation Heatmap of Biodiversity Indicators")
 corr_matrix = df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]].corr()
 fig, ax = plt.subplots(figsize=(6, 4))
