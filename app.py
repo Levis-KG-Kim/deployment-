@@ -59,34 +59,6 @@ def load_model():
 col = st.columns((1.5, 4.5, 2), gap='medium')
 
 with col[0]:
-    st.markdown('#### Gains/Losses')
-
-    st.subheader(f"Trends for {selected_area}")
-
-    fig, axes = plt.subplots(4,1,figsize=(10,10),sharex=True)
-    Selected_row = df_reshaped[(df_reshaped.Area_Name == selected_area)]
-    #ndvi
-    sns.lineplot(data=Selected_row, x='Year', y='mean_ndvi',marker='o' ,ax=axes[0])
-    axes[0].set_title('NDVI Trend over Time ({selected_area})')
-    axes[0].set_ylabel('Mean Annual NDVI')
-    #ndwi
-    sns.lineplot(data=Selected_row, x='Year', y='mean_ndwi',marker='o' ,ax=axes[1])
-    axes[1].set_title('NDWI Trend over Time ({selected_area})')
-    axes[1].set_ylabel('Mean Annual NDWI')
-    #bsi
-    sns.lineplot(data=Selected_row, x='Year', y='mean_bsi',marker='o' ,ax=axes[2])
-    axes[2].set_title('BSI Trend over Time ({selected_area})')
-    axes[2].set_ylabel('Mean Annual BSI')
-    #rainfall
-    sns.lineplot(data=Selected_row, x='Year', y='mean_rainfall',marker='o' ,ax=axes[3])
-    axes[3].set_title('Rainfall Trend over Time ({selected_area})')
-    axes[3].set_ylabel('Mean Annual Rainfall')
-
-    plt.xlabel('Year')
-    plt.tight_layout()
-    plt.show()
-
-with col[1]:
 # Load the shapefile
     @st.cache_data
     def load_shapefile():
