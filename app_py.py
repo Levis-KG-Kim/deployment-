@@ -34,8 +34,6 @@ Area_Name = st.sidebar.multiselect(
     default = df['Area_Name'].unique()
 )
 
-df = df.loc[df['Area of Interest'].isin(aoi)]
-
 st.dataframe(df)
 
 # year side bar
