@@ -28,7 +28,7 @@ df = load_data()
 
 # import side bar
 st.sidebar.header('Please Filter Here')
-Area_Name = st.sidebar.multiselect(
+Area_Name = st.sidebar.selectbox(
     'Select Area of Interest',
     options = df['Area_Name'].unique(),
     default = df['Area_Name'].unique()
@@ -37,7 +37,7 @@ Area_Name = st.sidebar.multiselect(
 st.dataframe(df)
 
 # year side bar
-Year = st.sidebar.multiselect(
+Year = st.sidebar.selectbox(
     'Select Year',
     options = df['Year'].unique(),
     default = df['Year'].unique()
