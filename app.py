@@ -80,5 +80,5 @@ folium_static(create_map(selected_area, selected_color_theme))
 
 # Show area data
 st.subheader("Shapefile Data")
-st.write(gdf[gdf['NAME'] == selected_area])  # Show selected area details
+st.write(gdf[gdf['Area_Name'] == selected_area])  # Show selected area details
 
