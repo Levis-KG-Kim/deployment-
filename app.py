@@ -51,9 +51,6 @@ with st.sidebar:
     area_list = sorted(df_selected_year["Area_Name"].dropna().astype(str).unique())
     selected_area = st.selectbox('Select an Area', area_list)
 @st.cache()
-# Ensure it's in the correct CRS for mapping (EPSG:4326 for lat/lon)
-if gdf.crs and gdf.crs != "EPSG:4326":
-    gdf = gdf.to_crs("EPSG:4326")
 
 # Extract centroid coordinates (for point placement)
 gdf["lon"] = gdf.geometry.centroid.x
