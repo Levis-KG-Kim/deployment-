@@ -93,6 +93,7 @@ def create_map(selected_area, selected_color_theme):
 
 # ======================== New Dashboard Layout ========================
 st.title("🌍 Terrestrial Ecosystems in Kenya")
+df_area = df_reshaped[df_reshaped["Area_Name"] == selected_area]
 
 # **Use Columns for a Creative Layout**
 col1, col2 = st.columns([3, 2])
