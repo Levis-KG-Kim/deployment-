@@ -71,7 +71,7 @@ st.title("Kenyan Terrestrial Ecosystems Biodiversity Analysis")
 st.subheader(f"Map of {selected_area} in {selected_year}")
 
 # Add an image to the Streamlit app
-st.image("/mnt/data/kenya_biodiversity.jpg", caption="Kenyan Biodiversity", use_column_width=True)
+st.image("WhatsApp Image 2025-02-27 at 8.54.26 AM.jpg", caption="Kenyan Biodiversity", use_column_width=True)
 
 # Show area data
 st.subheader("Shapefile Data")
