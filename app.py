@@ -39,8 +39,8 @@ st.markdown(
 # Load Data
 @st.cache_data
 def load_data():
-    df = pd.read_csv("/mnt/data/final_merged.csv")
-    gdf = gpd.read_file("/mnt/data/kbd_with_names.shp")
+    df = pd.read_csv("final_merged.csv")
+    gdf = gpd.read_file("shapefiles/kbd_with_names.shp")
     
     # Ensure geometries are valid
     gdf = gdf[gdf.geometry.notnull()]
