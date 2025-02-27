@@ -68,13 +68,13 @@ def create_map(selected_area, selected_color_theme):
         return m
 
     # Assign Risk Colors
-    risk_color_map = {"High": "red", "Medium": "orange", "Low": "green"}
+    risk_color_map = {"Overall Gain": "red", "Overall Stable": "orange", "Overall Loss": "green"}
     
     for _, row in gdf_selected.iterrows():
         area_name = row[area_column]
         
         # Retrieve risk level (If available in CSV)
-        risk_level = df_selected_year[df_selected_year["Area_Name"] == area_name]["Risk_Factor"].values
+        risk_level = df_selected_year[df_selected_year["Area_Name"] == area_name]["Area_Trend"].values
         risk_level = risk_level[0] if len(risk_level) > 0 else "Low"
         
         folium.GeoJson(
