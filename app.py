@@ -129,7 +129,7 @@ axes[0].set_title("Distribution of Area Risk Trend")
 
 sns.histplot(df_area, x="Final_Label", bins=10, kde=True, ax=axes[1], color="orange")
 
-  with st.expander('About', expanded=True):
+with st.expander('About', expanded=True):
         st.write('''
             This project was prepared as a final project by a group of students from Moringa.
             Biodiversity is key to our livelihood and a primary concern to most if not all. There's still more to be done.
