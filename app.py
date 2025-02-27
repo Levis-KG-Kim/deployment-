@@ -111,13 +111,13 @@ st.pyplot(fig)
 
 # Heatmap of Correlations
 st.subheader("Correlation Heatmap of Biodiversity Indicators")
-fig, ax = plt.subplots(figsize=(5, 3))
+fig, ax = plt.subplots(figsize=(4, 2.5))
 sns.heatmap(df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]].corr(), annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
 st.pyplot(fig)
 
 # Boxplot for Variability Analysis
 st.subheader("Variability of Biodiversity Indicators")
-fig, ax = plt.subplots(figsize=(7, 4))
+fig, ax = plt.subplots(figsize=(6, 3))
 sns.boxplot(data=df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]], palette="Set2", ax=ax)
 st.pyplot(fig)
 
