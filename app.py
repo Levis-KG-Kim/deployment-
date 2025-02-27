@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import altair as alt
 import geopandas as gpd
-import folium
-from streamlit_folium import folium_static
 import plotly.express as px
 
 # Page configuration
@@ -17,14 +15,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-
-
 # Load Data
 df_reshaped = pd.read_csv('final_merged.csv')
 
 @st.cache_data
 def load_shapefile():
-    return gpd.read_file("shapefiles/kbd_with_names.shp")
+    return gpd.read_file("kbd_with_names.shp")
 
 gdf = load_shapefile()
 
@@ -40,17 +36,16 @@ if not area_column:
 with st.sidebar:
     st.title('Kenyan Protected Areas')
 
-     # **Year Selection**
+    # **Year Selection**
     year_list = sorted(df_reshaped.Year.unique(), reverse=True)
     selected_year = st.selectbox('📅 Select a Year', year_list)
 
     # **Filter data for selected year**
     df_selected_year = df_reshaped[df_reshaped.Year == selected_year]
-    
-    
-    # Area Selection
+
+    # **Area Selection**
     area_list = sorted(df_selected_year["Area_Name"].dropna().astype(str).unique())
-    selected_area = st.selectbox('Select an Area', area_list)
+    selected_area = st.selectbox('📍 Select an Area', area_list)
 
 # Check if CRS (Coordinate Reference System) is defined and convert if needed
 if gdf.crs is not None and gdf.crs.to_string() != "EPSG:4326":
@@ -83,72 +78,17 @@ fig.update_layout(
     margin={"r":0, "t":0, "l":0, "b":0}  # Removes extra white space
 )
 
-# Display in Streamlit
-st.subheader("📍 Interactive Map of Protected Areas")
-st.plotly_chart(fig, use_container_width=True)
-
-
-
-
-# Function to Create Map with Area Highlighting
-def create_map(selected_area):
-    # Create a map centered in Kenya
-    m = folium.Map(location=[-1.286389, 36.817223], zoom_start=6, tiles="CartoDB dark_matter")  
-
-    # Check if area column exists in the shapefile
-    if area_column not in gdf.columns:
-        st.error("Error: The selected area column is missing in the shapefile!")
-        return m
-
-    # Filter shapefile for the selected area
-    gdf_selected = gdf[gdf[area_column].astype(str).str.contains(selected_area, na=False, case=False)]
-
-    # Debugging Step: Print filtered data
-    st.write("Filtered Areas for Selection:", gdf_selected)
-
-    if gdf_selected.empty:
-        st.warning(f"No matching area found in the shapefile for '{selected_area}'.")
-        return m  # Return the default map if no area is found
-
-    # Assign Risk Colors
-    risk_color_map = {"High": "red", "Medium": "orange", "Low": "green"}
-
-    for _, row in gdf_selected.iterrows():
-        area_name = row[area_column]
-
-        # Retrieve risk level (If available in CSV)
-        risk_level = df_selected_year[df_selected_year["Area_Name"] == area_name]["Risk_Factor"].values
-        risk_level = risk_level[0] if len(risk_level) > 0 else "Low"
-
-        folium.GeoJson(
-            row["geometry"],
-            name=area_name,
-            style_function=lambda feature, risk=risk_level: {
-                "fillColor": risk_color_map.get(risk, "blue"),
-                "color": "black",
-                "weight": 2,
-                "fillOpacity": 0.6,
-            },
-            tooltip=folium.Tooltip(f"{area_name} - Risk: {risk_level}")
-        ).add_to(m)
-
-    return m  # Ensure the function returns the Folium map
-
-
 # ======================== New Dashboard Layout ========================
 st.title("🌑 Kenyan Ecosystem Dashboard")
+
+# **Display the Interactive Map**
+st.subheader("🌍 Interactive Map of Protected Areas")
+st.plotly_chart(fig, use_container_width=True)
 
 # **Filter Data for Selected Area**
 df_area = df_reshaped[df_reshaped["Area_Name"] == selected_area]
 
-# **Grid Layout for Aesthetics**
-col1, col2 = st.columns([2, 3])
-
-with col1:
-    st.subheader("🌍 Geospatial Overview")
-    folium_static(create_map(selected_area))
-
-# **Area Risk Trend Now Moved Below the Map**
+# **Area Risk Trend**
 st.subheader("⚠️ Area Risk Trend")
 if "Risk_Factor" in df_area.columns:
     risk_chart = alt.Chart(df_area).mark_line(color="red").encode(
@@ -158,14 +98,6 @@ if "Risk_Factor" in df_area.columns:
     st.altair_chart(risk_chart, use_container_width=True)
 else:
     st.warning("Risk data unavailable.")
-
-
-# Disable Dark Mode for Altair
-alt.themes.enable("none")  # Ensures charts use standard colors
-
-# Ensure Matplotlib & Seaborn Have Light Backgrounds
-plt.style.use("default")  # Light theme for charts
-sns.set_theme(style="whitegrid")  # Light grid background
 
 # ---------------------- Biodiversity Trends ----------------------
 st.subheader("📈 Biodiversity Trends")
