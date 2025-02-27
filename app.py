@@ -142,10 +142,16 @@ if "Risk_Factor" in df_area.columns:
 else:
     st.warning("Risk data unavailable.")
 
-# **Biodiversity Trends**
-st.subheader("📈 Biodiversity Trends")
-alt.themes.enable("dark")
 
+# Disable Dark Mode for Altair
+alt.themes.enable("none")  # Ensures charts use standard colors
+
+# Ensure Matplotlib & Seaborn Have Light Backgrounds
+plt.style.use("default")  # Light theme for charts
+sns.set_theme(style="whitegrid")  # Light grid background
+
+# ---------------------- Biodiversity Trends ----------------------
+st.subheader("📈 Biodiversity Trends")
 trend_chart = alt.Chart(df_area).transform_fold(
     ["mean_ndvi", "mean_ndwi", "mean_bsi", "Mean_Rainfall_mm"], as_=["Index", "Value"]
 ).mark_line().encode(
@@ -153,41 +159,34 @@ trend_chart = alt.Chart(df_area).transform_fold(
     y="Value:Q",
     color="Index:N"
 ).interactive()
-
 st.altair_chart(trend_chart, use_container_width=True)
 
-# **Distributions & Heatmap**
+# ---------------------- Distribution Charts ----------------------
 col3, col4 = st.columns(2)
 
 with col3:
     st.subheader("📊 Indicator Distributions")
-    fig, ax = plt.subplots(1, 3, figsize=(15, 5), facecolor="#0e1117")
+    fig, ax = plt.subplots(1, 3, figsize=(15, 5))
 
-    sns.histplot(df_area["mean_ndvi"], bins=20, kde=True, ax=ax[0], color="lime")
-    ax[0].set_title("NDVI", color="white")
-    ax[0].set_facecolor("#0e1117")
+    sns.histplot(df_area["mean_ndvi"], bins=20, kde=True, ax=ax[0], color="green")
+    ax[0].set_title("NDVI Distribution")
 
-    sns.histplot(df_area["mean_ndwi"], bins=20, kde=True, ax=ax[1], color="cyan")
-    ax[1].set_title("NDWI", color="white")
-    ax[1].set_facecolor("#0e1117")
+    sns.histplot(df_area["mean_ndwi"], bins=20, kde=True, ax=ax[1], color="blue")
+    ax[1].set_title("NDWI Distribution")
 
     sns.histplot(df_area["mean_bsi"], bins=20, kde=True, ax=ax[2], color="red")
-    ax[2].set_title("BSI", color="white")
-    ax[2].set_facecolor("#0e1117")
+    ax[2].set_title("BSI Distribution")
 
-    plt.setp(ax, xticks=[], yticks=[])
     st.pyplot(fig)
 
 with col4:
     st.subheader("🔗 Correlation Heatmap")
-    fig, ax = plt.subplots(figsize=(6, 4), facecolor="#0e1117")
+    fig, ax = plt.subplots(figsize=(6, 4))
     sns.heatmap(df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]].corr(), annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
-    ax.set_facecolor("#0e1117")
     st.pyplot(fig)
 
-# **Variability Boxplot**
+# ---------------------- Variability Boxplot ----------------------
 st.subheader("📌 Variability Analysis")
-fig, ax = plt.subplots(figsize=(10, 5), facecolor="#0e1117")
+fig, ax = plt.subplots(figsize=(10, 5))
 sns.boxplot(data=df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]], palette="coolwarm")
-ax.set_facecolor("#0e1117")
 st.pyplot(fig)
