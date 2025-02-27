@@ -27,10 +27,6 @@ def load_shapefile():
 
 gdf = load_shapefile()
 
-# Ensure CRS is correct
-if gdf.crs and gdf.crs != "EPSG:4326":
-    gdf.to_crs("EPSG:4326", inplace=True)
-
 # Identify Correct Column Name for Area Filtering
 possible_area_columns = [col for col in gdf.columns if "area" in col.lower()]
 area_column = possible_area_columns[0] if possible_area_columns else None
