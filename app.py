@@ -51,19 +51,28 @@ with st.sidebar:
     area_list = sorted(df_selected_year["Area_Name"].dropna().astype(str).unique())
     selected_area = st.selectbox('Select an Area', area_list)
     
-@st.cache()
-# Ensure it's in the correct CRS for mapping (EPSG:4326 for lat/lon)
-if gdf.crs and gdf.crs != "EPSG:4326":
+import plotly.express as px
+import geopandas as gpd
+
+# Ensure GeoDataFrame is loaded
+@st.cache_data
+def load_shapefile():
+    return gpd.read_file("kbd_with_names.shp")
+
+gdf = load_shapefile()
+
+# Check if CRS (Coordinate Reference System) is defined and convert if needed
+if gdf.crs is not None and gdf.crs.to_string() != "EPSG:4326":
     gdf = gdf.to_crs("EPSG:4326")
 
-# Extract centroid coordinates (for point placement)
+# Extract centroid coordinates for each area
 gdf["lon"] = gdf.geometry.centroid.x
 gdf["lat"] = gdf.geometry.centroid.y
 
-# Drop rows with missing coordinates
+# Drop rows with missing coordinates (NaN values)
 gdf = gdf.dropna(subset=["lon", "lat"])
 
-# Debugging: Show sample data
+# Debugging: Display sample data
 st.write("Sample Data for Map:", gdf[[area_column, "lon", "lat"]].head())
 
 # Create an Interactive Scatter Map
@@ -77,15 +86,16 @@ fig = px.scatter_mapbox(
     height=500
 )
 
-# Use a Public Mapbox Style (No API Key Required)
+# Use OpenStreetMap (No API Key Required)
 fig.update_layout(
     mapbox_style="open-street-map",
-    margin={"r":0,"t":0,"l":0,"b":0}  # Removes extra white space
+    margin={"r":0, "t":0, "l":0, "b":0}  # Removes extra white space
 )
 
 # Display in Streamlit
 st.subheader("📍 Interactive Map of Protected Areas")
 st.plotly_chart(fig, use_container_width=True)
+
 
 
 
