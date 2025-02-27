@@ -50,16 +50,6 @@ with st.sidebar:
     # Area Selection
     area_list = sorted(df_selected_year["Area_Name"].dropna().astype(str).unique())
     selected_area = st.selectbox('Select an Area', area_list)
-    
-import plotly.express as px
-import geopandas as gpd
-
-# Ensure GeoDataFrame is loaded
-@st.cache_data
-def load_shapefile():
-    return gpd.read_file("kbd_with_names.shp")
-
-gdf = load_shapefile()
 
 # Check if CRS (Coordinate Reference System) is defined and convert if needed
 if gdf.crs is not None and gdf.crs.to_string() != "EPSG:4326":
