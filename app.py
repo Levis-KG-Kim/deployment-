@@ -40,6 +40,14 @@ if not area_column:
 # Sidebar Filters
 with st.sidebar:
     st.title('Kenyan Protected Areas')
+
+     # **Year Selection**
+    year_list = sorted(df_reshaped.Year.unique(), reverse=True)
+    selected_year = st.selectbox('📅 Select a Year', year_list)
+
+    # **Filter data for selected year**
+    df_selected_year = df_reshaped[df_reshaped.Year == selected_year]
+    
     
     # Area Selection
     area_list = sorted(df_selected_year["Area_Name"].dropna().astype(str).unique())
