@@ -13,3 +13,4 @@ xgboost
 geopandas
 folium
 streamlit-folium
+tensorflow 
