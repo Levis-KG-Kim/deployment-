@@ -33,13 +33,17 @@ st.markdown(
 )
 
 # Load Data
-df_reshaped = pd.read_csv('final_merged.csv')
-
 @st.cache_data
-def load_shapefile():
-    return gpd.read_file("shapefiles/kbd_with_names.shp")
+def load_data():
+    df = pd.read_csv("/mnt/data/final_merged.csv")
+    gdf = gpd.read_file("/mnt/data/kbd_with_names.shp")
+    
+    # Ensure geometries are valid
+    gdf = gdf[gdf.geometry.notnull()]
+    
+    return df, gdf
 
-gdf = load_shapefile()
+df_reshaped, gdf = load_data()
 
 # Sidebar Filters
 with st.sidebar:
@@ -50,53 +54,62 @@ with st.sidebar:
     area_list = sorted(df_selected_year["Area_Name"].dropna().astype(str).unique())
     selected_area = st.selectbox('Select an Area', area_list)
 
-import streamlit as st
-import geopandas as gpd
-import pandas as pd
-import folium
-from streamlit_folium import folium_static
-from branca.colormap import linear
+# Merge datasets
+if "Area_Name" not in df_reshaped.columns or "AreaName" not in gdf.columns:
+    st.error("Error: Required column names not found.")
+    st.stop()
 
-# Merge the data on the appropriate key (adjust column names if needed)
-merged_gdf = gdf.merge(df_reshaped, left_on='AreaName', right_on='Area_Name')  # Ensure 'region_id' matches your dataset
+merged_gdf = gdf.merge(df_reshaped, left_on="AreaName", right_on="Area_Name")
 
-# Define color mapping for biodiversity classification
+# Ensure CRS is EPSG:4326
+if merged_gdf.crs is None:
+    merged_gdf.set_crs(epsg=4326, inplace=True)
+else:
+    merged_gdf = merged_gdf.to_crs(epsg=4326)
+
+# Define color mapping
 color_mapping = {
     "Overall Gain": "green",
     "Overall Loss": "red",
     "Overall Stable": "blue"
 }
 
-# Create a folium map centered on the data's centroid
-m = folium.Map(location=[merged_gdf.geometry.centroid.y.mean(), merged_gdf.geometry.centroid.x.mean()], zoom_start=6)
+# Create a folium map
+m = folium.Map(
+    location=[merged_gdf.geometry.centroid.y.mean(), merged_gdf.geometry.centroid.x.mean()],
+    zoom_start=6
+)
 
-# Add regions to the map
-for _, row in merged_gdf.iterrows():
-    color = color_mapping.get(row["Area_Trend"], "gray")  # Default to gray if classification is missing
-    folium.GeoJson(
-        row.geometry,
-        style_function=lambda feature, color=color: {
-            "fillColor": color,
-            "color": "black",
-            "weight": 1,
-            "fillOpacity": 0.6
-        }
-    ).add_to(m)
+# Add regions with proper lambda function
+def style_function(feature):
+    area_trend = feature["properties"].get("Area_Trend", "Unknown")
+    return {
+        "fillColor": color_mapping.get(area_trend, "gray"),
+        "color": "black",
+        "weight": 1,
+        "fillOpacity": 0.6
+    }
 
-# Streamlit app
+folium.GeoJson(
+    merged_gdf,
+    name="Biodiversity Classification",
+    style_function=style_function
+).add_to(m)
+
+# Display map in Streamlit
 st.title("Biodiversity Classification Choropleth Map")
 st.write("This map highlights regions based on biodiversity classification.")
 folium_static(m)
 
-
 # Main UI
 st.title("Kenyan Terrestrial Ecosystems Biodiversity Analysis")
 st.subheader(f"Map of {selected_area} in {selected_year}")
-folium_static(create_map(selected_area))
+folium_static(m)
 
 # Show area data
 st.subheader("Shapefile Data")
 st.write(gdf[gdf['AreaName'] == selected_area])
+
 
 # ======================== Adjusted Visualizations ========================
 
