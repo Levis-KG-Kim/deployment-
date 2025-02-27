@@ -10,11 +10,7 @@ from joblib import load
 import altair as alt
 import geopandas as gpd
 import folium
-from streamlit_folium import folium_static
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-from sklearn.preprocessing import MinMaxScaler
-import tensorflow as tf
+from streamlit_folium import folium_static 
 
 # Page configuration
 st.set_page_config(
@@ -49,13 +45,6 @@ def load_data():
 
 df_reshaped, gdf = load_data()
 
-# Load LSTM Model
-@st.cache_resource
-def load_lstm_model():
-    return load_model("lstm_model.h5")
-
-model = load_lstm_model()
-
 # Sidebar Filters
 with st.sidebar:
     st.title('Kenyan Protected Areas')
@@ -65,41 +54,76 @@ with st.sidebar:
     area_list = sorted(df_selected_year["Area_Name"].dropna().astype(str).unique())
     selected_area = st.selectbox('Select an Area', area_list)
 
-
 # Main UI
 st.title("Kenyan Terrestrial Ecosystems Biodiversity Analysis")
 st.subheader(f"Map of {selected_area} in {selected_year}")
 
 # Add an image to the Streamlit app
-st.image("WhatsApp Image 2025-02-27 at 8.54.26 AM.jpg", caption="Kenyan Biodiversity", use_column_width=True)
+st.image("WhatsApp Image 2025-02-27 at 8.54.26 AM.jpeg", caption="Kenyan Biodiversity", use_container_width=True)
 
 # Show area data
 st.subheader("Shapefile Data")
 st.write(gdf[gdf['AreaName'] == selected_area])
 
-# Time-Series Forecasting with LSTM
-st.subheader("Time-Series Forecasting for Biodiversity Indicators")
 
-def prepare_forecast_data(area_name, df):
-    area_df = df[df["Area_Name"] == area_name][["Year", "mean_ndvi"]].copy()
-    area_df.sort_values(by="Year", inplace=True)
-    scaler = MinMaxScaler()
-    area_df["mean_ndvi"] = scaler.fit_transform(area_df[["mean_ndvi"]])
-    return area_df, scaler
+# ======================== Adjusted Visualizations ========================
 
-area_data, scaler = prepare_forecast_data(selected_area, df_reshaped)
+df_area = df_reshaped[df_reshaped["Area_Name"] == selected_area]
 
-def predict_future(data, model, steps=5):
-    last_sequence = np.array(data["mean_ndvi"].values[-10:]).reshape(1, 10, 1)
-    predictions = []
-    for _ in range(steps):
-        pred = model.predict(last_sequence)[0][0]
-        predictions.append(pred)
-        last_sequence = np.append(last_sequence[:, 1:, :], [[[pred]]], axis=1)
-    return scaler.inverse_transform(np.array(predictions).reshape(-1, 1)).flatten()
+# Time-Series Line Chart
+st.subheader(f"Time-Series Trends for {selected_area}")
+line_chart = alt.Chart(df_area).transform_fold(
+    ["mean_dvi", "mean_ndwi", "mean_bsi", "Mean_Rainfall_mm"], as_=["Index", "Value"]
+).mark_line().encode(
+    x="Year:O",
+    y="Value:Q",
+    color="Index:N"
+).properties(width=600, height=300)
 
-future_predictions = predict_future(area_data, model)
-future_years = list(range(area_data["Year"].max() + 1, area_data["Year"].max() + 6))
+st.altair_chart(line_chart)
 
-forecast_df = pd.DataFrame({"Year": future_years, "Predicted_NDVI": future_predictions})
-st.line_chart(forecast_df.set_index("Year"))
+# Histogram of Biodiversity Indicators
+st.subheader("Distribution of NDVI, NDWI, and BSI")
+fig, axes = plt.subplots(1, 3, figsize=(10, 3), constrained_layout=True)
+
+sns.histplot(df_area["mean_ndvi"], bins=20, kde=True, ax=axes[0], color="green")
+axes[0].set_title("NDVI Distribution")
+
+sns.histplot(df_area["mean_ndwi"], bins=20, kde=True, ax=axes[1], color="blue")
+axes[1].set_title("NDWI Distribution")
+
+sns.histplot(df_area["mean_bsi"], bins=20, kde=True, ax=axes[2], color="red")
+axes[2].set_title("BSI Distribution")
+
+st.pyplot(fig)
+
+# Heatmap of Correlations and Boxplot
+fig, axes = plt.subplots(1, 2, figsize=(10, 3), constrained_layout=True)
+
+sns.heatmap(df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]].corr(), annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=axes[0])
+axes[0].set_title("Correlation Heatmap")
+
+sns.boxplot(data=df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]], palette="Set2", ax=axes[1])
+axes[1].set_title("Variability of Biodiversity Indicators")
+
+st.pyplot(fig)
+
+# Classification Visualization for Area Risk Trend and Final Label
+st.subheader("Classification of Area Risk Trend and Final Label")
+fig, axes = plt.subplots(1, 2, figsize=(10, 3), constrained_layout=True)
+
+sns.histplot(df_area, x="Area_Risk_Trend", bins=10, kde=True, ax=axes[0], color="purple")
+axes[0].set_title("Distribution of Area Risk Trend")
+
+sns.histplot(df_area, x="Final_Label", bins=10, kde=True, ax=axes[1], color="orange")
+
+st.pyplot(fig)
+
+with st.expander('About', expanded=True):
+        st.write('''
+            This project was prepared as a final project by a group of students from Moringa.
+            Biodiversity is key to our livelihood and a primary concern to most if not all. There's still more to be done.
+            ''')
+axes[1].set_title("Distribution of Final Label")
+
+
