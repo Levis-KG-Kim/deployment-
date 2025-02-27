@@ -22,9 +22,6 @@ def load_shapefile():
 
 gdf = load_shapefile()
 
-# Debug: Print shapefile columns
-st.write("Shapefile Columns:", gdf.columns)
-
 # Identify Correct Column Name for Area Filtering
 possible_area_columns = [col for col in gdf.columns if "area" in col.lower()]
 area_column = possible_area_columns[0] if possible_area_columns else None
@@ -32,9 +29,6 @@ area_column = possible_area_columns[0] if possible_area_columns else None
 if not area_column:
     st.error("No valid area name column found in the shapefile!")
     st.stop()
-
-# Debug: Print available areas
-st.write("Matching Areas in Shapefile:", gdf[area_column].unique())
 
 # Sidebar Filters
 with st.sidebar:
