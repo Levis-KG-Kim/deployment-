@@ -16,24 +16,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Apply Dark Theme to Page Only (NOT the Visuals)
-st.markdown("""
-    <style>
-    body {
-        color: #e0e0e0;
-        background-color: #0e1117;
-    }
-    .stApp {
-        background-color: #0e1117;
-    }
-    .stSidebar {
-        background-color: #161b22 !important;
-    }
-    .stMarkdown, .stTextInput, .stSelectbox, .stButton, .stDataFrame, .stTable {
-        color: white !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
 
 
 # Load Data
