@@ -55,6 +55,28 @@ with st.sidebar:
     area_list = sorted(df_selected_year["Area_Name"].dropna().astype(str).unique())
     selected_area = st.selectbox('Select an Area', area_list)
 
+import plotly.express as px
+
+# Convert Shapefile to a DataFrame
+df_map = gdf.copy()
+df_map["lon"] = df_map.geometry.centroid.x
+df_map["lat"] = df_map.geometry.centroid.y
+
+# Create an Interactive Scatter Map
+fig = px.scatter_mapbox(df_map, 
+                        lat="lat", 
+                        lon="lon", 
+                        hover_name=area_column,
+                        color_discrete_sequence=["red"], 
+                        zoom=5, 
+                        height=500)
+
+fig.update_layout(mapbox_style="carto-darkmatter")
+
+# Display in Streamlit
+st.subheader("📌 Plotly Map of Protected Areas")
+st.plotly_chart(fig, use_container_width=True)
+
 # Function to Create Map with Area Highlighting
 def create_map(selected_area):
     # Create a map centered in Kenya
