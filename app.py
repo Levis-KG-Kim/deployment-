@@ -7,6 +7,7 @@ import altair as alt
 import geopandas as gpd
 import folium
 from streamlit_folium import folium_static
+import plotly.express as px
 
 # Page configuration
 st.set_page_config(
