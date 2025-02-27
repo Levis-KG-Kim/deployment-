@@ -52,7 +52,7 @@ df_reshaped, gdf = load_data()
 # Load LSTM Model
 @st.cache_resource
 def load_lstm_model():
-    return load_model("/mnt/data/Modeling1_2.h5")
+    return load_model("lstm_model.h5")
 
 model = load_lstm_model()
 
