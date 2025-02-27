@@ -14,7 +14,7 @@ from streamlit_folium import folium_static
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from sklearn.preprocessing import MinMaxScaler
-import tesorflow as tf
+import tensorflow as tf
 
 # Page configuration
 st.set_page_config(
