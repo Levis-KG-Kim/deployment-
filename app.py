@@ -54,57 +54,12 @@ with st.sidebar:
     area_list = sorted(df_selected_year["Area_Name"].dropna().astype(str).unique())
     selected_area = st.selectbox('Select an Area', area_list)
 
-# Merge datasets
-if "Area_Name" not in df_reshaped.columns or "AreaName" not in gdf.columns:
-    st.error("Error: Required column names not found.")
-    st.stop()
-
-merged_gdf = gdf.merge(df_reshaped, left_on="AreaName", right_on="Area_Name")
-
-# Ensure CRS is EPSG:4326
-if merged_gdf.crs is None:
-    merged_gdf.set_crs(epsg=4326, inplace=True)
-else:
-    merged_gdf = merged_gdf.to_crs(epsg=4326)
-
-# Define color mapping
-color_mapping = {
-    "Overall Gain": "green",
-    "Overall Loss": "red",
-    "Overall Stable": "blue"
-}
-
-# Create a folium map
-m = folium.Map(
-    location=[merged_gdf.geometry.centroid.y.mean(), merged_gdf.geometry.centroid.x.mean()],
-    zoom_start=6
-)
-
-# Add regions with proper lambda function
-def style_function(feature):
-    area_trend = feature["properties"].get("Area_Trend", "Unknown")
-    return {
-        "fillColor": color_mapping.get(area_trend, "gray"),
-        "color": "black",
-        "weight": 1,
-        "fillOpacity": 0.6
-    }
-
-folium.GeoJson(
-    merged_gdf,
-    name="Biodiversity Classification",
-    style_function=style_function
-).add_to(m)
-
-# Display map in Streamlit
-st.title("Biodiversity Classification Choropleth Map")
-st.write("This map highlights regions based on biodiversity classification.")
-folium_static(m)
-
 # Main UI
 st.title("Kenyan Terrestrial Ecosystems Biodiversity Analysis")
 st.subheader(f"Map of {selected_area} in {selected_year}")
-folium_static(m)
+
+# Add an image to the Streamlit app
+st.image("/mnt/data/kenya_biodiversity.p", caption="Kenyan Biodiversity", use_column_width=True)
 
 # Show area data
 st.subheader("Shapefile Data")
