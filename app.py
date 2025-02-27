@@ -129,6 +129,8 @@ axes[0].set_title("Distribution of Area Risk Trend")
 
 sns.histplot(df_area, x="Final_Label", bins=10, kde=True, ax=axes[1], color="orange")
 
+st.pyplot(fig)
+
 with st.expander('About', expanded=True):
         st.write('''
             This project was prepared as a final project by a group of students from Moringa.
@@ -136,4 +138,4 @@ with st.expander('About', expanded=True):
             ''')
 axes[1].set_title("Distribution of Final Label")
 
-st.pyplot(fig)
+
