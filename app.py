@@ -120,3 +120,12 @@ st.subheader("Variability of Biodiversity Indicators")
 fig, ax = plt.subplots(figsize=(7, 4))
 sns.boxplot(data=df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]], palette="Set2", ax=ax)
 st.pyplot(fig)
+
+# Classification Visualization for Area Trend and Risk Trend
+st.subheader("Classification of Area Trend and Area Risk Trend")
+fig, ax = plt.subplots(figsize=(7, 4))
+sns.countplot(data=df_area, x="Area_Trend", hue="Area_Risk_Trend", palette="muted", ax=ax)
+ax.set_xlabel("Area Trend")
+ax.set_ylabel("Count")
+ax.set_title("Classification of Areas by Trend and Risk Trend")
+st.pyplot(fig)
