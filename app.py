@@ -76,7 +76,7 @@ def create_map(selected_area, selected_color_theme):
     return m
 
 # Main UI
-st.title("Kenyan Areas Visualization")
+st.title("Kenyan Terrestrial ecosystems Biodiversity Analysis")
 
 # Map display
 st.subheader(f"Map of {selected_area} in {selected_year}")
