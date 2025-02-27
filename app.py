@@ -68,13 +68,13 @@ def create_map(selected_area, selected_color_theme):
         return m
 
     # Assign Risk Colors
-    risk_color_map = {"Overall Gain": "red", "Overall Stable": "orange", "Overall Loss": "green"}
+    risk_color_map = {"High": "red", "Medium": "orange", "Low": "green"}
     
     for _, row in gdf_selected.iterrows():
         area_name = row[area_column]
         
         # Retrieve risk level (If available in CSV)
-        risk_level = df_selected_year[df_selected_year["Area_Name"] == area_name]["Area_Trend"].values
+        risk_level = df_selected_year[df_selected_year["Area_Name"] == area_name]["Risk_Factor"].values
         risk_level = risk_level[0] if len(risk_level) > 0 else "Low"
         
         folium.GeoJson(
@@ -141,4 +141,23 @@ with col3:
     sns.histplot(df_area["mean_ndvi"], bins=20, kde=True, ax=ax[0], color="green")
     ax[0].set_title("NDVI Distribution")
 
-    sns.histplot(df_area["mean_ndwi"], bins=20, kde=True, ax=a
+    sns.histplot(df_area["mean_ndwi"], bins=20, kde=True, ax=ax[1], color="blue")
+    ax[1].set_title("NDWI Distribution")
+
+    sns.histplot(df_area["mean_bsi"], bins=20, kde=True, ax=ax[2], color="red")
+    ax[2].set_title("BSI Distribution")
+
+    st.pyplot(fig)
+
+with col4:
+    st.subheader("📌 Correlation Heatmap")
+    corr_matrix = df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]].corr()
+    fig, ax = plt.subplots(figsize=(6, 4))
+    sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
+    st.pyplot(fig)
+
+# ======================== Variability Analysis ========================
+st.subheader("📌 Biodiversity Variability Analysis")
+fig, ax = plt.subplots(figsize=(10, 5))
+sns.boxplot(data=df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]], palette="Set2")
+st.pyplot(fig)
