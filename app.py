@@ -71,7 +71,7 @@ def create_map(selected_area):
         return m
     
     # Case-insensitive, whitespace-trimmed filtering
-gdf_selected = gdf[gdf[area_column].astype(str).str.strip().str.lower() == selected_area.strip().lower()]
+    gdf_selected = gdf[gdf[area_column].astype(str).str.strip().str.lower() == selected_area.strip().lower()]
     
     if gdf_selected.empty:
         st.warning(f"No matching area found in the shapefile for '{selected_area}'.")
