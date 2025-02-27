@@ -54,28 +54,42 @@ with st.sidebar:
     # Area Selection
     area_list = sorted(df_selected_year["Area_Name"].dropna().astype(str).unique())
     selected_area = st.selectbox('Select an Area', area_list)
+@st.cache()
+# Ensure it's in the correct CRS for mapping (EPSG:4326 for lat/lon)
+if gdf.crs and gdf.crs != "EPSG:4326":
+    gdf = gdf.to_crs("EPSG:4326")
 
-import plotly.express as px
+# Extract centroid coordinates (for point placement)
+gdf["lon"] = gdf.geometry.centroid.x
+gdf["lat"] = gdf.geometry.centroid.y
 
-# Convert Shapefile to a DataFrame
-df_map = gdf.copy()
-df_map["lon"] = df_map.geometry.centroid.x
-df_map["lat"] = df_map.geometry.centroid.y
+# Drop rows with missing coordinates
+gdf = gdf.dropna(subset=["lon", "lat"])
+
+# Debugging: Show sample data
+st.write("Sample Data for Map:", gdf[[area_column, "lon", "lat"]].head())
 
 # Create an Interactive Scatter Map
-fig = px.scatter_mapbox(df_map, 
-                        lat="lat", 
-                        lon="lon", 
-                        hover_name=area_column,
-                        color_discrete_sequence=["red"], 
-                        zoom=5, 
-                        height=500)
+fig = px.scatter_mapbox(
+    gdf, 
+    lat="lat", 
+    lon="lon", 
+    hover_name=area_column,
+    color_discrete_sequence=["red"], 
+    zoom=5, 
+    height=500
+)
 
-fig.update_layout(mapbox_style="carto-darkmatter")
+# Use a Public Mapbox Style (No API Key Required)
+fig.update_layout(
+    mapbox_style="open-street-map",
+    margin={"r":0,"t":0,"l":0,"b":0}  # Removes extra white space
+)
 
 # Display in Streamlit
-st.subheader("📌 Plotly Map of Protected Areas")
+st.subheader("📍 Interactive Map of Protected Areas")
 st.plotly_chart(fig, use_container_width=True)
+
 
 # Function to Create Map with Area Highlighting
 def create_map(selected_area):
