@@ -49,20 +49,6 @@ with st.sidebar:
 if gdf.crs and gdf.crs.to_string() != "EPSG:4326":
     gdf = gdf.to_crs("EPSG:4326")
 
-# Extract centroid coordinates for visualization
-gdf["lon"] = gdf.geometry.centroid.x
-gdf["lat"] = gdf.geometry.centroid.y
-gdf = gdf.dropna(subset=["lon", "lat"])
-
-# Create Interactive Map
-fig = px.scatter_mapbox(
-    gdf, lat="lat", lon="lon", hover_name=area_column,
-    color_discrete_sequence=["red"], zoom=5, height=500
-)
-fig.update_layout(mapbox_style="open-street-map", margin={"r":0, "t":0, "l":0, "b":0})
-st.subheader("\U0001F4CD Interactive Map of Protected Areas")
-st.plotly_chart(fig, use_container_width=True)
-
 # Function to Create Map with Area Highlighting
 def create_map(selected_area):
     m = folium.Map(location=[-1.286389, 36.817223], zoom_start=6, tiles="CartoDB dark_matter")
