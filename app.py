@@ -58,7 +58,7 @@ from streamlit_folium import folium_static
 from branca.colormap import linear
 
 # Merge the data on the appropriate key (adjust column names if needed)
-merged_gdf = gdf.merge(df, left_on='region_id', right_on='region_id')  # Ensure 'region_id' matches your dataset
+merged_gdf = gdf.merge(df_reshaped, left_on='region_id', right_on='region_id')  # Ensure 'region_id' matches your dataset
 
 # Define color mapping for biodiversity classification
 color_mapping = {
