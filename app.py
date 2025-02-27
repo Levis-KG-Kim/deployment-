@@ -20,7 +20,7 @@ df_reshaped = pd.read_csv('final_merged.csv')
 
 @st.cache_data
 def load_shapefile():
-    return gpd.read_file("kbd_with_names.shp")
+    return gpd.read_file("shapefiles/kbd_with_names.shp")
 
 gdf = load_shapefile()
 
