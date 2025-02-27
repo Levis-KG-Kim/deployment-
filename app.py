@@ -96,7 +96,7 @@ st.altair_chart(line_chart)
 
 # Histogram of Biodiversity Indicators
 st.subheader("Distribution of NDVI, NDWI, and BSI")
-fig, axes = plt.subplots(1, 3, figsize=(12, 3), constrained_layout=True)
+fig, axes = plt.subplots(1, 3, figsize=(10, 3), constrained_layout=True)
 
 sns.histplot(df_area["mean_ndvi"], bins=20, kde=True, ax=axes[0], color="green")
 axes[0].set_title("NDVI Distribution")
@@ -109,23 +109,25 @@ axes[2].set_title("BSI Distribution")
 
 st.pyplot(fig)
 
-# Heatmap of Correlations
-st.subheader("Correlation Heatmap of Biodiversity Indicators")
-fig, ax = plt.subplots(figsize=(4, 2.5))
-sns.heatmap(df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]].corr(), annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
+# Heatmap of Correlations and Boxplot
+fig, axes = plt.subplots(1, 2, figsize=(10, 3), constrained_layout=True)
+
+sns.heatmap(df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]].corr(), annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=axes[0])
+axes[0].set_title("Correlation Heatmap")
+
+sns.boxplot(data=df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]], palette="Set2", ax=axes[1])
+axes[1].set_title("Variability of Biodiversity Indicators")
+
 st.pyplot(fig)
 
-# Boxplot for Variability Analysis
-st.subheader("Variability of Biodiversity Indicators")
-fig, ax = plt.subplots(figsize=(6, 3))
-sns.boxplot(data=df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]], palette="Set2", ax=ax)
-st.pyplot(fig)
+# Classification Visualization for Area Risk Trend and Final Label
+st.subheader("Classification of Area Risk Trend and Final Label")
+fig, axes = plt.subplots(1, 2, figsize=(10, 3), constrained_layout=True)
 
-# Classification Visualization for Area Trend and Risk Trend
-st.subheader("Classification of Area Trend and Area Risk Trend")
-fig, ax = plt.subplots(figsize=(7, 4))
-sns.countplot(data=df_area, x="Area_Trend", hue="Area_Risk_Trend", palette="muted", ax=ax)
-ax.set_xlabel("Area Trend")
-ax.set_ylabel("Count")
-ax.set_title("Classification of Areas by Trend and Risk Trend")
+sns.histplot(df_area, x="Area_Risk_Trend", bins=10, kde=True, ax=axes[0], color="purple")
+axes[0].set_title("Distribution of Area Risk Trend")
+
+sns.histplot(df_area, x="Final_Label", bins=10, kde=True, ax=axes[1], color="orange")
+axes[1].set_title("Distribution of Final Label")
+
 st.pyplot(fig)
