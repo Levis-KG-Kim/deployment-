@@ -54,26 +54,35 @@ with st.sidebar:
     selected_area = st.selectbox('Select an Area', area_list)
 
 # Function to Create Map with Area Highlighting
-def create_map(selected_area, selected_color_theme):
-    m = folium.Map(location=[-1.286389, 36.817223], zoom_start=6)  # Centered on Kenya
+def create_map(selected_area):
+    # Create a map centered in Kenya
+    m = folium.Map(location=[-1.286389, 36.817223], zoom_start=6, tiles="CartoDB dark_matter")  
 
-    # Filter shapefile for selected area
-    gdf_selected = gdf[gdf[area_column].str.contains(selected_area, na=False, case=False)]
+    # Check if area column exists in the shapefile
+    if area_column not in gdf.columns:
+        st.error("Error: The selected area column is missing in the shapefile!")
+        return m
+
+    # Filter shapefile for the selected area
+    gdf_selected = gdf[gdf[area_column].astype(str).str.contains(selected_area, na=False, case=False)]
+
+    # Debugging Step: Print filtered data
+    st.write("Filtered Areas for Selection:", gdf_selected)
 
     if gdf_selected.empty:
         st.warning(f"No matching area found in the shapefile for '{selected_area}'.")
-        return m
+        return m  # Return the default map if no area is found
 
     # Assign Risk Colors
-    risk_color_map = {"Overall Gain": "red", "Overall Stable": "orange", "Overall Loss": "green"}
-    
+    risk_color_map = {"High": "red", "Medium": "orange", "Low": "green"}
+
     for _, row in gdf_selected.iterrows():
         area_name = row[area_column]
-        
+
         # Retrieve risk level (If available in CSV)
-        risk_level = df_selected_year[df_selected_year["Area_Name"] == area_name]["Area_Trend"].values
+        risk_level = df_selected_year[df_selected_year["Area_Name"] == area_name]["Risk_Factor"].values
         risk_level = risk_level[0] if len(risk_level) > 0 else "Low"
-        
+
         folium.GeoJson(
             row["geometry"],
             name=area_name,
@@ -86,7 +95,8 @@ def create_map(selected_area, selected_color_theme):
             tooltip=folium.Tooltip(f"{area_name} - Risk: {risk_level}")
         ).add_to(m)
 
-    return m
+    return m  # Ensure the function returns the Folium map
+
 
 # ======================== New Dashboard Layout ========================
 st.title("🌑 Kenyan Ecosystem Dashboard")
