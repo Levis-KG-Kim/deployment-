@@ -1,10 +1,8 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import altair as alt
 import geopandas as gpd
+import folium
+from streamlit_folium import folium_static
 import plotly.express as px
 
 # Page configuration
@@ -20,9 +18,12 @@ df_reshaped = pd.read_csv('final_merged.csv')
 
 @st.cache_data
 def load_shapefile():
-    return gpd.read_file("shapefiles/kbd_with_names.shp")
+    return gpd.read_file("shapefiles/kbd_with_names.shp")  # Updated path
 
 gdf = load_shapefile()
+
+# Debug: Print shapefile columns
+st.write("Shapefile Columns:", gdf.columns)
 
 # Identify Correct Column Name for Area Filtering
 possible_area_columns = [col for col in gdf.columns if "area" in col.lower()]
@@ -32,110 +33,75 @@ if not area_column:
     st.error("No valid area name column found in the shapefile!")
     st.stop()
 
+# Debug: Print available areas
+st.write("Matching Areas in Shapefile:", gdf[area_column].unique())
+
 # Sidebar Filters
 with st.sidebar:
     st.title('Kenyan Protected Areas')
-
-    # **Year Selection**
     year_list = sorted(df_reshaped.Year.unique(), reverse=True)
     selected_year = st.selectbox('📅 Select a Year', year_list)
-
-    # **Filter data for selected year**
     df_selected_year = df_reshaped[df_reshaped.Year == selected_year]
-
-    # **Area Selection**
     area_list = sorted(df_selected_year["Area_Name"].dropna().astype(str).unique())
-    selected_area = st.selectbox('📍 Select an Area', area_list)
+    selected_area = st.selectbox('Select an Area', area_list)
 
-# Check if CRS (Coordinate Reference System) is defined and convert if needed
-if gdf.crs is not None and gdf.crs.to_string() != "EPSG:4326":
+# Ensure correct coordinate reference system
+if gdf.crs and gdf.crs.to_string() != "EPSG:4326":
     gdf = gdf.to_crs("EPSG:4326")
 
-# Extract centroid coordinates for each area
+# Extract centroid coordinates for visualization
 gdf["lon"] = gdf.geometry.centroid.x
 gdf["lat"] = gdf.geometry.centroid.y
-
-# Drop rows with missing coordinates (NaN values)
 gdf = gdf.dropna(subset=["lon", "lat"])
 
-# Debugging: Display sample data
-st.write("Sample Data for Map:", gdf[[area_column, "lon", "lat"]].head())
-
-# Create an Interactive Scatter Map
+# Create Interactive Map
 fig = px.scatter_mapbox(
-    gdf, 
-    lat="lat", 
-    lon="lon", 
-    hover_name=area_column,
-    color_discrete_sequence=["red"], 
-    zoom=5, 
-    height=500
+    gdf, lat="lat", lon="lon", hover_name=area_column,
+    color_discrete_sequence=["red"], zoom=5, height=500
 )
-
-# Use OpenStreetMap (No API Key Required)
-fig.update_layout(
-    mapbox_style="open-street-map",
-    margin={"r":0, "t":0, "l":0, "b":0}  # Removes extra white space
-)
-
-# ======================== New Dashboard Layout ========================
-st.title("🌑 Kenyan Ecosystem Dashboard")
-
-# **Display the Interactive Map**
-st.subheader("🌍 Interactive Map of Protected Areas")
+fig.update_layout(mapbox_style="open-street-map", margin={"r":0, "t":0, "l":0, "b":0})
+st.subheader("\U0001F4CD Interactive Map of Protected Areas")
 st.plotly_chart(fig, use_container_width=True)
 
-# **Filter Data for Selected Area**
+# Function to Create Map with Area Highlighting
+def create_map(selected_area):
+    m = folium.Map(location=[-1.286389, 36.817223], zoom_start=6, tiles="CartoDB dark_matter")
+    if area_column not in gdf.columns:
+        st.error("Error: The selected area column is missing in the shapefile!")
+        return m
+    
+    # Case-insensitive, whitespace-trimmed filtering
+gdf_selected = gdf[gdf[area_column].astype(str).str.strip().str.lower() == selected_area.strip().lower()]
+    
+    if gdf_selected.empty:
+        st.warning(f"No matching area found in the shapefile for '{selected_area}'.")
+        return m
+    
+    risk_color_map = {"High": "red", "Medium": "orange", "Low": "green"}
+    for _, row in gdf_selected.iterrows():
+        area_name = row[area_column]
+        risk_level = df_selected_year[df_selected_year["Area_Name"].str.strip().str.lower() == area_name.strip().lower()]["Risk_Factor"].values
+        risk_level = risk_level[0] if len(risk_level) > 0 else "Low"
+        
+        folium.GeoJson(
+            row["geometry"],
+            name=area_name,
+            style_function=lambda feature, risk=risk_level: {
+                "fillColor": risk_color_map.get(risk, "blue"),
+                "color": "black",
+                "weight": 2,
+                "fillOpacity": 0.6,
+            },
+            tooltip=folium.Tooltip(f"{area_name} - Risk: {risk_level}")
+        ).add_to(m)
+    
+    return m
+
+# Display Map with Highlights
+st.title("\U0001F311 Kenyan Ecosystem Dashboard")
 df_area = df_reshaped[df_reshaped["Area_Name"] == selected_area]
+col1, col2 = st.columns([2, 3])
 
-# **Area Risk Trend**
-st.subheader("⚠️ Area Risk Trend")
-if "Risk_Factor" in df_area.columns:
-    risk_chart = alt.Chart(df_area).mark_line(color="red").encode(
-        x="Year:O",
-        y="Risk_Factor:Q"
-    ).interactive()
-    st.altair_chart(risk_chart, use_container_width=True)
-else:
-    st.warning("Risk data unavailable.")
-
-# ---------------------- Biodiversity Trends ----------------------
-st.subheader("📈 Biodiversity Trends")
-trend_chart = alt.Chart(df_area).transform_fold(
-    ["mean_ndvi", "mean_ndwi", "mean_bsi", "Mean_Rainfall_mm"], as_=["Index", "Value"]
-).mark_line().encode(
-    x="Year:O",
-    y="Value:Q",
-    color="Index:N"
-).interactive()
-st.altair_chart(trend_chart, use_container_width=True)
-
-# ---------------------- Distribution Charts ----------------------
-col3, col4 = st.columns(2)
-
-with col3:
-    st.subheader("📊 Indicator Distributions")
-    fig, ax = plt.subplots(1, 3, figsize=(15, 5))
-
-    sns.histplot(df_area["mean_ndvi"], bins=20, kde=True, ax=ax[0], color="green")
-    ax[0].set_title("NDVI Distribution")
-
-    sns.histplot(df_area["mean_ndwi"], bins=20, kde=True, ax=ax[1], color="blue")
-    ax[1].set_title("NDWI Distribution")
-
-    sns.histplot(df_area["mean_bsi"], bins=20, kde=True, ax=ax[2], color="red")
-    ax[2].set_title("BSI Distribution")
-
-    st.pyplot(fig)
-
-with col4:
-    st.subheader("🔗 Correlation Heatmap")
-    fig, ax = plt.subplots(figsize=(6, 4))
-    sns.heatmap(df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]].corr(), annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
-    st.pyplot(fig)
-
-# ---------------------- Variability Boxplot ----------------------
-st.subheader("📌 Variability Analysis")
-fig, ax = plt.subplots(figsize=(10, 5))
-sns.boxplot(data=df_area[["mean_ndvi", "mean_ndwi", "mean_bsi"]], palette="coolwarm")
-st.pyplot(fig)
+with col1:
+    st.subheader("\U0001F30D Geospatial Overview")
+    folium_static(create_map(selected_area))
