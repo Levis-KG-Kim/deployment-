@@ -50,24 +50,44 @@ with st.sidebar:
     area_list = sorted(df_selected_year["Area_Name"].dropna().astype(str).unique())
     selected_area = st.selectbox('Select an Area', area_list)
 
-# Function to Create Map
-def create_map(selected_area):
-    m = folium.Map(location=[-1.286389, 36.817223], zoom_start=6)
-    if gdf.crs and gdf.crs != "EPSG:4326":
-        gdf.to_crs("EPSG:4326", inplace=True)
-    gdf_selected = gdf[gdf['AreaName'] == selected_area] 
-    if not gdf_selected.empty:
-        folium.GeoJson(
-            gdf_selected,
-            name="Selected Area",
-            style_function=lambda feature: {
-                "fillColor": "green",
-                "color": "black",
-                "weight": 2,
-                "fillOpacity": 0.6,
-            }
-        ).add_to(m)
-    return m
+import streamlit as st
+import geopandas as gpd
+import pandas as pd
+import folium
+from streamlit_folium import folium_static
+from branca.colormap import linear
+
+# Merge the data on the appropriate key (adjust column names if needed)
+merged_gdf = gdf.merge(df, left_on='region_id', right_on='region_id')  # Ensure 'region_id' matches your dataset
+
+# Define color mapping for biodiversity classification
+color_mapping = {
+    "gain": "green",
+    "loss": "red",
+    "stable": "blue"
+}
+
+# Create a folium map centered on the data's centroid
+m = folium.Map(location=[merged_gdf.geometry.centroid.y.mean(), merged_gdf.geometry.centroid.x.mean()], zoom_start=6)
+
+# Add regions to the map
+for _, row in merged_gdf.iterrows():
+    color = color_mapping.get(row["classification"], "gray")  # Default to gray if classification is missing
+    folium.GeoJson(
+        row.geometry,
+        style_function=lambda feature, color=color: {
+            "fillColor": color,
+            "color": "black",
+            "weight": 1,
+            "fillOpacity": 0.6
+        }
+    ).add_to(m)
+
+# Streamlit app
+st.title("Biodiversity Classification Choropleth Map")
+st.write("This map highlights regions based on biodiversity classification.")
+folium_static(m)
+
 
 # Main UI
 st.title("Kenyan Terrestrial Ecosystems Biodiversity Analysis")
