@@ -50,7 +50,11 @@ with st.sidebar:
     # Area Selection
     area_list = sorted(df_selected_year["Area_Name"].dropna().astype(str).unique())
     selected_area = st.selectbox('Select an Area', area_list)
+    
 @st.cache()
+# Ensure it's in the correct CRS for mapping (EPSG:4326 for lat/lon)
+if gdf.crs and gdf.crs != "EPSG:4326":
+    gdf = gdf.to_crs("EPSG:4326")
 
 # Extract centroid coordinates (for point placement)
 gdf["lon"] = gdf.geometry.centroid.x
@@ -82,6 +86,7 @@ fig.update_layout(
 # Display in Streamlit
 st.subheader("📍 Interactive Map of Protected Areas")
 st.plotly_chart(fig, use_container_width=True)
+
 
 
 # Function to Create Map with Area Highlighting
