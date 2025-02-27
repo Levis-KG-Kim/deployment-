@@ -62,9 +62,9 @@ merged_gdf = gdf.merge(df_reshaped, left_on='AreaName', right_on='Area_Name')  #
 
 # Define color mapping for biodiversity classification
 color_mapping = {
-    "gain": "green",
-    "loss": "red",
-    "stable": "blue"
+    "Overall Gain": "green",
+    "Overall Loss": "red",
+    "Overall Stable": "blue"
 }
 
 # Create a folium map centered on the data's centroid
@@ -72,7 +72,7 @@ m = folium.Map(location=[merged_gdf.geometry.centroid.y.mean(), merged_gdf.geome
 
 # Add regions to the map
 for _, row in merged_gdf.iterrows():
-    color = color_mapping.get(row["classification"], "gray")  # Default to gray if classification is missing
+    color = color_mapping.get(row["Area_Trend"], "gray")  # Default to gray if classification is missing
     folium.GeoJson(
         row.geometry,
         style_function=lambda feature, color=color: {
